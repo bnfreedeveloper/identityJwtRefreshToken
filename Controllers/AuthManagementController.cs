@@ -26,13 +26,15 @@ namespace todaapp.Controllers
         private readonly ConfigJwt _jwtConfig;
         private readonly TokenValidationParameters _tokenValidationParameters;
         private readonly TodoDbContext _db;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AuthManagementController(UserManager<IdentityUser> userManager, IOptionsMonitor<ConfigJwt> jwtConfig, TokenValidationParameters tokenValidationParams, TodoDbContext dbcontext)
+        public AuthManagementController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IOptionsMonitor<ConfigJwt> jwtConfig, TokenValidationParameters tokenValidationParams, TodoDbContext dbcontext)
         {
             _userManager = userManager;
             _jwtConfig = jwtConfig.CurrentValue;
             _tokenValidationParameters = tokenValidationParams;
             _db = dbcontext;
+            _roleManager = roleManager;
 
         }
         [HttpPost]
@@ -73,7 +75,11 @@ namespace todaapp.Controllers
                     Success = false
                 });
             }
+            // here we gonna add a role for the user
+            var roleAddedToUser = await _userManager.AddToRoleAsync(newUser, "administrator");
+
             var token = await GenerateToken(newUser);
+            // token.Role = roleAddedToUser.Succeeded;
             return Ok(token);
         }
         [HttpPost("login")]

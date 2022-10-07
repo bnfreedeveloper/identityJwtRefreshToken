@@ -11,5 +11,7 @@ namespace todaapp.Configuration
         public string RefreshToken { get; set; }
         public bool Success { get; set; }
         public List<string> Errors { get; set; }
+
+        //public bool Role { get; set; }
     }
 }

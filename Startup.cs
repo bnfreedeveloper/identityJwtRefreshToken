@@ -67,7 +67,7 @@ namespace todaapp
                 options.TokenValidationParameters = tokenValidationParameters;
             });
             //Manage DI like usermanager ...
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            services.AddIdentity<IdentityUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
                     .AddEntityFrameworkStores<TodoDbContext>();
             services.AddSwaggerGen(c =>
                 {
