@@ -256,18 +256,15 @@ namespace todaapp.Controllers
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtConfig.Secret);
+            var claims = await GetAllClaims(user);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new List<Claim>{
-                   new Claim("Id",user.Id),
-                   new Claim(JwtRegisteredClaimNames.Email,user.Email),
-                   new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                   new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
-                }),
-                //possibly 10-15min normally
-                Expires = DateTime.UtcNow.AddSeconds(40),
+                Subject = new ClaimsIdentity(claims),
+                //possibly 10-15min normally , here it will be 5min + 40s
+                Expires = DateTime.Now.AddSeconds(40),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
             };
+
             var tokenCreated = jwtTokenHandler.CreateToken(tokenDescriptor);
             var tokenStringify = jwtTokenHandler.WriteToken(tokenCreated);
 
@@ -280,8 +277,8 @@ namespace todaapp.Controllers
                 IsUsed = false,
                 IsRevoked = false,
                 UserId = user.Id,
-                AddedDate = DateTime.UtcNow,
-                ExpiryDate = DateTime.UtcNow.AddMonths(6),
+                AddedDate = DateTime.Now,
+                ExpiryDate = DateTime.Now.AddMonths(6),
                 Token = RamdomString(35) + Guid.NewGuid()
             };
             await _db.RefreshTokens.AddAsync(refreshToken);
@@ -293,7 +290,37 @@ namespace todaapp.Controllers
                 RefreshToken = refreshToken.Token
             };
         }
+        private async Task<List<Claim>> GetAllClaims(IdentityUser user)
+        {
+            var options = new IdentityOptions();
+            var claims = new List<Claim>{
+                 new Claim("Id",user.Id),
+                   new Claim(JwtRegisteredClaimNames.Email,user.Email),
+                   new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                   new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
+            };
 
+            //we get the claims assigned to the user
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            claims.AddRange(userClaims);
+
+            //we get the role of the user and add it to the claims
+            var userRoles = await _userManager.GetRolesAsync(user);
+            foreach (var role in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+                var roleUser = await _roleManager.FindByNameAsync(role);
+                if (roleUser != null)
+                {
+                    var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
+                    foreach (var roleClaim in roleClaims)
+                    {
+                        claims.Add(roleClaim);
+                    }
+                }
+            }
+            return claims;
+        }
         private string RamdomString(int length)
         {
             var Random = new Random();

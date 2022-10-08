@@ -13,7 +13,7 @@ namespace todaapp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "administrator")]
     public class TodoController : ControllerBase
     {
         public readonly TodoDbContext _Db;
@@ -30,6 +30,7 @@ namespace todaapp.Controllers
         }
 
         [HttpPost]
+        [Authorize(policy: "belongToDepartment")]
         public async Task<IActionResult> AddItem(Item data)
         {
             if (ModelState.IsValid)

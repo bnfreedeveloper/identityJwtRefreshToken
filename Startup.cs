@@ -50,7 +50,7 @@ namespace todaapp
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ValidateLifetime = true,
-                RequireExpirationTime = false
+                RequireExpirationTime = true
             };
             services.AddSingleton(tokenValidationParameters);
 
@@ -79,6 +79,13 @@ namespace todaapp
                     });
 
                 });
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("belongToDepartment", policy =>
+                {
+                    policy.RequireClaim("department");
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
